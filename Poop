@@ -1,0 +1,155 @@
+#include <SoftwareSerial.h>
+//----------------------Variables---------------------------
+//-----------Bluetooth---------------------
+SoftwareSerial BT(16, 8); //(RX,TX)
+//---------- Lights------------------------
+int lightPins[] = {4,3,2};
+int lightNumber = sizeof(lightPins); 
+int lightN = 0;
+bool lightState = 0;
+//Full,Left,Right
+//----------Motors-------------------------
+int motorPins[] = {12,11,10,9};
+int motorNumber = sizeof(motorPins); 
+int motorState[] = {0,0,0,0};
+//Left forward, L Back, Right B, R F
+//----------Other--------------------------
+char a;  
+//Generic variable used in bluetooth
+
+
+
+
+//----------------------Setup----------------------------------
+void setup() {
+  //Setup pins
+  for(int n = 0; n < lightNumber; n++){ 
+      pinMode(lightPins[n], OUTPUT);
+  }
+  for(int n = 0; n < 4; n++){
+    pinMode(motorPins[n], OUTPUT);
+  }
+  // Send test message to other device
+  BT.begin(9600);
+  BT.println("Connected");
+  a = '0';
+  checkConnection();
+
+}
+
+
+
+
+
+
+
+//----------------------------------------------loop------------------------------
+void loop() {
+  if (BT.available()){
+  // if text arrived in from Serial serial...
+    a=(BT.read());
+    switch(a){
+      case '0':{
+        //STOP
+        BT.println("STOP");
+        int motorState[] = {0,0,0,0};
+        changeMotors(motorState);
+        break;
+      }
+      case '1':{
+        //Forward
+        BT.println("FORWARD");
+        int motorState[] = {1,0,0,1};
+        changeMotors(motorState);
+        break;
+      }
+      case '2':{
+        //Left
+        BT.println("LEFT");
+        int motorState[] = {0,1,0,1};
+        changeMotors(motorState);
+        break;
+      }
+      case '3':{
+        //Right
+        BT.println("RIGHT"); 
+        int motorState[] = {1,0,1,0};
+        changeMotors(motorState);
+        break;
+      }
+      case '4':{
+        //Back
+        BT.println("BACK");
+        int motorState[] = {0,1,1,0};
+        changeMotors(motorState);
+        break;
+      }
+      case 'L':{
+        //Indicate Left
+        BT.println("indicate left");
+        indicate(1);
+        break;
+      }
+      case 'R':{
+        //Indicate Right
+        BT.println("indicate right");
+        indicate(2);
+        break;
+      }
+      case 'F':{
+        //Lights full
+        BT.println("full lights");
+        lightSwitch(0);
+        break;
+      }
+//      case 'C':{
+//        //Check Connections
+//        Serial.println("Check connections");
+//        checkConnection();
+//      }
+    }
+    
+  }
+}
+
+
+
+
+
+//-----------------------------------------functions---------------------------------------------------
+void changeMotors(int motorState[]){
+//Set the volspeed of the motors
+  for(int n = 0; n < 4; n++){ 
+    digitalWrite(motorPins[n], motorState[n]);
+  }
+}
+void checkConnection(){
+  //Check connection
+      indicate(1);
+      indicate(2);
+      lightSwitch(0);      
+      int m[] = {1,0,0,1};
+      changeMotors(m);
+      delay(1000);
+      int n[] = {0,1,1,0};
+      changeMotors(n);
+      delay(1000);
+      int b[] = {0,0,0,0};
+      changeMotors(b);
+      lightSwitch(0);
+}
+void indicate(int lightN){
+//Will make lights flash
+   for(int n = 0; n < 4; n++){ 
+    digitalWrite(lightPins[lightN], HIGH);
+    delay(100);
+    digitalWrite(lightPins[lightN], LOW);
+    delay(100);
+   }
+}
+
+void lightSwitch(int lightN){
+//Turn lights on or off
+  lightState = !lightState;
+  digitalWrite(lightPins[lightN],lightState);
+}
